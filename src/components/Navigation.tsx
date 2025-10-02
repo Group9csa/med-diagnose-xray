@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Activity, Menu, X, Stethoscope, BarChart3, Network } from "lucide-react";
+import { Activity, Menu, X, Stethoscope, BarChart3, Network, LogOut, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const navigation = [
-    { name: "Home", href: "/", icon: Activity },
+    { name: "Home", href: "/home", icon: Activity },
     { name: "Prediction", href: "/prediction", icon: Stethoscope },
     { name: "Model Comparison", href: "/comparison", icon: BarChart3 },
     { name: "Federated Learning", href: "/federated", icon: Network },
@@ -22,13 +24,13 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" className="flex items-center space-x-2 group">
+            <Link to="/home" className="flex items-center space-x-2 group">
               <div className="p-2 bg-gradient-primary rounded-lg shadow-medical group-hover:shadow-lg transition-all duration-300">
-                <Activity className="h-6 w-6 text-primary-foreground" />
+                <Brain className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
                 <h1 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  MedAI
+                  MedVision AI
                 </h1>
                 <p className="text-xs text-muted-foreground">Pneumonia Detection</p>
               </div>
@@ -36,8 +38,8 @@ const Navigation = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
+          <div className="hidden md:flex items-center gap-2">
+            <div className="flex items-baseline space-x-4">
               {navigation.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -56,6 +58,17 @@ const Navigation = () => {
                 );
               })}
             </div>
+            {user && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="ml-4"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}

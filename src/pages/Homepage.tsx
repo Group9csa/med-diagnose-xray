@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Stethoscope, 
   Brain, 
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 
 const Homepage = () => {
+  const { user } = useAuth();
   const features = [
     {
       icon: Brain,
@@ -57,15 +59,21 @@ const Homepage = () => {
             </Badge>
             
             <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              Pneumonia Detection Using
+              MedVision AI
               <br />
-              <span className="text-accent">Transfer Learning</span>
+              <span className="text-accent">Professional Pneumonia Detection</span>
             </h1>
             
             <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-3xl mx-auto">
-              Advanced deep learning models for accurate classification of chest X-rays into 
-              Normal, Bacterial, and Viral pneumonia cases.
+              Advanced deep learning platform for medical professionals to accurately detect 
+              and classify pneumonia from chest X-rays.
             </p>
+            
+            {user && (
+              <p className="text-sm text-white/80 mb-6">
+                Welcome back, {user.email}
+              </p>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg">

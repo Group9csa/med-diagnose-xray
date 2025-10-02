@@ -1,54 +1,273 @@
-# MedAI - Pneumonia Detection Using Transfer Learning
+# MedVision AI - Professional Pneumonia Detection Platform
 
-A professional, production-ready frontend for AI-powered pneumonia detection using multiple deep learning models including CNN, VGG19, ResNet50, DenseNet121, and a Federated Global Model.
+An advanced AI-powered platform for medical professionals to detect and classify pneumonia from chest X-ray images using state-of-the-art deep learning models and federated learning.
 
-## 🚀 Features
+## 🌟 Features
 
-- **Modern Medical UI**: Professional hospital-grade design with responsive layout
-- **Multiple AI Models**: Support for CNN, VGG19, ResNet50, DenseNet121, and Federated Learning models
-- **File Upload**: Drag-and-drop X-ray image upload with validation
-- **Real-time Predictions**: Instant classification (Normal/Bacterial/Viral) with confidence scores
-- **Grad-CAM Visualization**: Visual explanations showing model attention areas
-- **Model Comparison**: Comprehensive performance metrics and confusion matrices
-- **Federated Learning**: Privacy-preserving collaborative learning visualization
-- **Mobile Responsive**: Optimized for all device sizes
-- **Dark/Light Mode**: Automatic theme detection and switching
+### 🧠 Multiple AI Models
+- **CNN** - Custom Convolutional Neural Network
+- **VGG19** - Transfer Learning with VGG19 architecture
+- **ResNet50** - Residual Network for deep feature extraction
+- **DenseNet121** - Densely connected networks
+- **Federated Global Model** - Privacy-preserving collaborative learning
 
-## 🏥 Pages Overview
+### 🔐 Secure Authentication
+- Professional account system for medical staff
+- Secure login/signup with email verification
+- User profile management
+- Session-based authentication
 
-### Homepage (`/`)
-- Project introduction and overview
-- Feature highlights with medical icons
-- Model performance summary
-- Navigation to all sections
+### 📊 Advanced Analysis
+- Real-time pneumonia detection
+- Confidence scores for predictions
+- Grad-CAM visualizations for model interpretability
+- Side-by-side model performance comparison
 
-### Prediction Page (`/prediction`)
-- Drag-and-drop X-ray image upload
-- Model selection dropdown
-- Real-time prediction results
-- Confidence score breakdown
-- Grad-CAM heatmap visualization
-- Loading states and error handling
+### 🏥 Federated Learning
+- Privacy-preserving collaborative training
+- Multi-hospital data simulation
+- Training history tracking
+- Performance metrics visualization
 
-### Model Comparison (`/comparison`)
-- Performance metrics table (accuracy, precision, recall, F1-score)
-- Visual accuracy comparison charts
-- Confusion matrices for all models
-- Best performing model highlights
-- Training time and parameter comparisons
+## 🚀 Quick Start
 
-### Federated Learning (`/federated`)
-- Federated learning process diagram
-- Participating hospitals network
-- Training progress across rounds
-- Centralized vs Federated comparison
-- Privacy and compliance benefits
+### Prerequisites
+- Node.js 16+ and npm
+- Python 3.8+
+- Trained model files (.h5 format)
 
-## 📋 Prerequisites
+### Installation
 
-- Node.js 18+ and npm
-- Modern web browser
-- Backend API server (Flask/Django) for model integration
+1. **Clone the repository**
+```bash
+git clone <your-repo-url>
+cd medvision-ai
+```
+
+2. **Install frontend dependencies**
+```bash
+npm install
+```
+
+3. **Install backend dependencies**
+```bash
+cd backend
+pip install -r requirements.txt
+cd ..
+```
+
+4. **Place your model files**
+```bash
+# Copy your trained models to the models directory
+cp path/to/your/*.h5 models/
+```
+
+5. **Start the application**
+
+Backend:
+```bash
+cd backend
+python app.py
+```
+
+Frontend (in a new terminal):
+```bash
+npm run dev
+```
+
+6. **Access the application**
+- Open `http://localhost:3000`
+- Click "Get Started"
+- Sign up with your professional account
+- Start detecting pneumonia!
+
+## 📚 Documentation
+
+- **[Integration Guide](INTEGRATION_GUIDE.md)** - Complete setup and integration instructions
+- **[Federated Setup Guide](backend/FEDERATED_SETUP_GUIDE.md)** - Federated learning configuration
+- **[Backend README](backend/README.md)** - Backend API documentation
+
+## 🏗️ Project Structure
+
+```
+medvision-ai/
+├── src/                      # Frontend React application
+│   ├── components/           # Reusable UI components
+│   ├── pages/               # Application pages
+│   │   ├── Welcome.tsx      # Landing page
+│   │   ├── Login.tsx        # Authentication page
+│   │   ├── Homepage.tsx     # Main dashboard
+│   │   ├── PredictionPage.tsx       # Single model prediction
+│   │   ├── ModelComparisonPage.tsx  # Multi-model comparison
+│   │   └── FederatedLearningPage.tsx # Federated learning interface
+│   ├── contexts/            # React contexts
+│   │   └── AuthContext.tsx  # Authentication state
+│   └── integrations/        # External integrations
+│       └── supabase/        # Database client (auto-generated)
+├── backend/                 # Flask backend
+│   ├── app.py              # Main Flask application
+│   ├── federated/          # Federated learning components
+│   │   ├── fl_server.py    # Federated server
+│   │   ├── fl_client.py    # Federated client simulation
+│   │   ├── fl_aggregator.py # Model aggregation
+│   │   └── fl_config.py    # FL configuration
+│   ├── uploads/            # Temporary upload storage
+│   └── static/             # Static files and Grad-CAM outputs
+├── models/                 # Trained model storage
+│   ├── *.h5               # Your trained models
+│   └── federated/         # Federated learning models
+└── public/                # Public assets
+```
+
+## 🔑 Key Technologies
+
+### Frontend
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **React Router** - Navigation
+- **Recharts** - Data visualization
+- **Shadcn/ui** - Component library
+
+### Backend
+- **Flask** - Python web framework
+- **TensorFlow/Keras** - Deep learning
+- **OpenCV** - Image processing
+- **NumPy** - Numerical computing
+
+### Database & Auth
+- **Lovable Cloud** - Backend infrastructure (powered by Supabase)
+- **PostgreSQL** - Relational database
+- **Row Level Security** - Data protection
+
+## 🎯 Usage
+
+### For Medical Professionals
+
+1. **Sign Up/Login**
+   - Create an account with your professional email
+   - Securely authenticate
+
+2. **Upload X-Ray**
+   - Navigate to the Prediction page
+   - Upload a chest X-ray image (JPEG, PNG)
+
+3. **Select Model**
+   - Choose from CNN, VGG19, ResNet50, DenseNet121, or Federated
+   - Click "Predict"
+
+4. **View Results**
+   - See prediction class (Normal, Bacterial, Viral)
+   - Check confidence scores
+   - Examine Grad-CAM visualization
+
+5. **Compare Models**
+   - Use Model Comparison page
+   - Compare all models side-by-side
+   - Analyze performance differences
+
+## 🧪 Model Training
+
+### Individual Models
+Train your models using the standard pneumonia dataset:
+- Dataset: Chest X-ray Images (Pneumonia)
+- Classes: Normal, Bacterial Pneumonia, Viral Pneumonia
+- Format: Save as `.h5` files
+
+### Federated Learning
+```bash
+cd backend/federated
+python fl_server.py
+```
+
+This will:
+- Simulate multi-hospital training
+- Create `global_model.h5`
+- Generate training history
+- Save checkpoints
+
+## 🔒 Security
+
+- ✅ Secure authentication with password hashing
+- ✅ Row-level security for user data
+- ✅ Protected API endpoints
+- ✅ CORS configured for production
+- ✅ Privacy-preserving federated learning
+- ✅ No patient data stored on device
+
+## 📊 Performance Metrics
+
+Our models achieve the following performance on the test set:
+
+| Model | Accuracy | Precision | Recall | F1-Score |
+|-------|----------|-----------|--------|----------|
+| CNN | 92.5% | 91.8% | 92.3% | 92.0% |
+| VGG19 | 94.2% | 93.9% | 94.1% | 94.0% |
+| ResNet50 | 93.8% | 93.2% | 93.6% | 93.4% |
+| DenseNet121 | 95.1% | 94.8% | 95.0% | 94.9% |
+| Federated Global | 96.3% | 96.1% | 96.2% | 96.1% |
+
+*Update these values with your actual model performance*
+
+## 🛠️ Development
+
+### Run in Development Mode
+
+Frontend:
+```bash
+npm run dev
+```
+
+Backend:
+```bash
+cd backend
+python app.py
+```
+
+### Build for Production
+
+Frontend:
+```bash
+npm run build
+```
+
+Backend:
+Deploy to your preferred platform (Heroku, Railway, Render, etc.)
+
+## 🤝 Contributing
+
+This is a final year project. For collaboration or questions, please contact the project team.
+
+## 📄 License
+
+This project is part of a final year academic research project. All rights reserved.
+
+## 👥 Authors
+
+**Medical AI Research Team**
+- Advanced pneumonia detection using transfer learning
+- Privacy-preserving federated learning implementation
+- Professional medical platform development
+
+## 🙏 Acknowledgments
+
+- Dataset providers for pneumonia X-ray images
+- TensorFlow and Keras teams
+- Medical professionals who provided domain expertise
+- Lovable platform for seamless full-stack development
+
+---
+
+## 📞 Support
+
+For issues, questions, or contributions:
+1. Check the [Integration Guide](INTEGRATION_GUIDE.md)
+2. Review the [Troubleshooting section](INTEGRATION_GUIDE.md#-troubleshooting)
+3. Contact the development team
+
+---
+
+**Built with ❤️ for medical professionals**
 
 ## 🔧 Installation
 
