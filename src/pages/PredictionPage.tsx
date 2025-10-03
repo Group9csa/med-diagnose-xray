@@ -18,20 +18,24 @@ import {
 } from "lucide-react";
 
 interface PredictionResult {
-  prediction: 'Normal' | 'Bacterial' | 'Viral';
-  confidence: {
-    Normal: number;
-    Bacterial: number;
-    Viral: number;
+  prediction: 'NORMAL' | 'BACTERIAL PNEUMONIA' | 'VIRAL PNEUMONIA';
+  confidence: number;
+  all_probabilities: {
+    normal: number;
+    bacterial: number;
+    viral: number;
   };
-  gradcam_url?: string;
-  processing_time?: number;
+  gradcam?: string | 'normal';
+  processing_time?: string;
+  model_used?: string;
 }
 
 const PredictionPage = () => {
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingGradcam, setIsGeneratingGradcam] = useState(false);
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
   const { toast } = useToast();
 
@@ -70,7 +74,10 @@ const PredictionPage = () => {
 
   const handleFileUpload = (file: File) => {
     setUploadedFile(file);
-    setPredictionResult(null); // Clear previous results
+    setPredictionResult(null);
+    // Create preview URL
+    const url = URL.createObjectURL(file);
+    setUploadedImageUrl(url);
   };
 
   const handlePredict = async () => {
@@ -86,13 +93,12 @@ const PredictionPage = () => {
     setIsLoading(true);
     
     try {
-      // TODO: Replace with actual API call to Flask/Django backend
-      /*
       const formData = new FormData();
       formData.append('image', uploadedFile);
       formData.append('model', selectedModel);
+      formData.append('generate_gradcam', 'false');
       
-      const response = await fetch('/api/predict', {
+      const response = await fetch('http://localhost:5000/api/predict', {
         method: 'POST',
         body: formData,
       });
@@ -103,33 +109,10 @@ const PredictionPage = () => {
       
       const result = await response.json();
       setPredictionResult(result);
-      */
-
-      // Simulate API call with mock data for demonstration
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const mockResult: PredictionResult = {
-        prediction: Math.random() > 0.5 ? 'Normal' : Math.random() > 0.5 ? 'Bacterial' : 'Viral',
-        confidence: {
-          Normal: Math.random() * 100,
-          Bacterial: Math.random() * 100,
-          Viral: Math.random() * 100,
-        },
-        gradcam_url: '/api/gradcam/latest', // TODO: Replace with actual Grad-CAM URL
-        processing_time: 2.3
-      };
-      
-      // Normalize confidence scores to sum to 100%
-      const total = mockResult.confidence.Normal + mockResult.confidence.Bacterial + mockResult.confidence.Viral;
-      mockResult.confidence.Normal = (mockResult.confidence.Normal / total) * 100;
-      mockResult.confidence.Bacterial = (mockResult.confidence.Bacterial / total) * 100;
-      mockResult.confidence.Viral = (mockResult.confidence.Viral / total) * 100;
-      
-      setPredictionResult(mockResult);
       
       toast({
         title: "Prediction Complete",
-        description: `Classified as ${mockResult.prediction} with ${mockResult.confidence[mockResult.prediction].toFixed(1)}% confidence`,
+        description: `Classified as ${result.prediction} with ${(result.confidence * 100).toFixed(1)}% confidence`,
       });
       
     } catch (error) {
@@ -144,22 +127,72 @@ const PredictionPage = () => {
     }
   };
 
-  const getResultColor = (prediction: string) => {
-    switch (prediction) {
-      case 'Normal': return 'normal';
-      case 'Bacterial': return 'bacterial';
-      case 'Viral': return 'viral';
-      default: return 'muted';
+  const handleGenerateGradcam = async () => {
+    if (!uploadedFile || !selectedModel || !predictionResult) {
+      return;
+    }
+
+    setIsGeneratingGradcam(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('image', uploadedFile);
+      formData.append('model', selectedModel);
+      formData.append('generate_gradcam', 'true');
+      
+      const response = await fetch('http://localhost:5000/api/predict', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error('Grad-CAM generation failed');
+      }
+      
+      const result = await response.json();
+      setPredictionResult(result);
+      
+      if (result.gradcam === 'normal') {
+        toast({
+          title: "Normal X-Ray",
+          description: "Grad-CAM highlighting is only generated for pneumonia cases",
+        });
+      } else {
+        toast({
+          title: "Grad-CAM Generated",
+          description: "Visual explanation showing affected areas",
+        });
+      }
+      
+    } catch (error) {
+      console.error('Grad-CAM error:', error);
+      toast({
+        title: "Grad-CAM Failed",
+        description: "An error occurred generating visualization. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingGradcam(false);
     }
   };
 
+  const getResultColor = (prediction: string) => {
+    if (prediction.includes('NORMAL')) return 'text-green-600';
+    if (prediction.includes('BACTERIAL')) return 'text-red-600';
+    if (prediction.includes('VIRAL')) return 'text-orange-600';
+    return 'text-muted-foreground';
+  };
+
+  const getResultBgColor = (prediction: string) => {
+    if (prediction.includes('NORMAL')) return 'bg-green-100';
+    if (prediction.includes('BACTERIAL')) return 'bg-red-100';
+    if (prediction.includes('VIRAL')) return 'bg-orange-100';
+    return 'bg-muted';
+  };
+
   const getResultIcon = (prediction: string) => {
-    switch (prediction) {
-      case 'Normal': return CheckCircle2;
-      case 'Bacterial': return AlertCircle;
-      case 'Viral': return AlertCircle;
-      default: return Activity;
-    }
+    if (prediction.includes('NORMAL')) return CheckCircle2;
+    return AlertCircle;
   };
 
   return (
@@ -288,7 +321,7 @@ const PredictionPage = () => {
                     Prediction Results
                   </CardTitle>
                   <CardDescription>
-                    AI analysis completed in {predictionResult.processing_time}s
+                    AI analysis completed in {predictionResult.processing_time}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -297,17 +330,18 @@ const PredictionPage = () => {
                     {(() => {
                       const ResultIcon = getResultIcon(predictionResult.prediction);
                       const colorClass = getResultColor(predictionResult.prediction);
+                      const bgClass = getResultBgColor(predictionResult.prediction);
                       
                       return (
                         <div>
-                          <div className={`mx-auto mb-4 p-4 rounded-full w-fit bg-${colorClass} text-${colorClass}-foreground`}>
-                            <ResultIcon className="h-8 w-8" />
+                          <div className={`mx-auto mb-4 p-4 rounded-full w-fit ${bgClass}`}>
+                            <ResultIcon className={`h-8 w-8 ${colorClass}`} />
                           </div>
                           <h3 className="text-2xl font-bold mb-2">
                             {predictionResult.prediction}
                           </h3>
                           <p className="text-muted-foreground">
-                            {predictionResult.confidence[predictionResult.prediction].toFixed(1)}% Confidence
+                            {(predictionResult.confidence * 100).toFixed(1)}% Confidence
                           </p>
                         </div>
                       );
@@ -318,34 +352,100 @@ const PredictionPage = () => {
                   <div className="space-y-3">
                     <h4 className="font-medium text-foreground">Confidence Breakdown</h4>
                     
-                    {Object.entries(predictionResult.confidence).map(([type, score]) => (
-                      <div key={type} className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="font-medium">{type}</span>
-                          <span className="text-muted-foreground">{score.toFixed(1)}%</span>
-                        </div>
-                        <Progress 
-                          value={score} 
-                          className={`h-2 bg-${getResultColor(type)}`}
-                        />
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium">Normal</span>
+                        <span className="text-muted-foreground">{(predictionResult.all_probabilities.normal * 100).toFixed(1)}%</span>
                       </div>
-                    ))}
+                      <Progress value={predictionResult.all_probabilities.normal * 100} className="h-2" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium">Bacterial</span>
+                        <span className="text-muted-foreground">{(predictionResult.all_probabilities.bacterial * 100).toFixed(1)}%</span>
+                      </div>
+                      <Progress value={predictionResult.all_probabilities.bacterial * 100} className="h-2" />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium">Viral</span>
+                        <span className="text-muted-foreground">{(predictionResult.all_probabilities.viral * 100).toFixed(1)}%</span>
+                      </div>
+                      <Progress value={predictionResult.all_probabilities.viral * 100} className="h-2" />
+                    </div>
                   </div>
 
                   {/* Grad-CAM Visualization */}
                   <div className="space-y-3">
-                    <h4 className="font-medium text-foreground">Visual Explanation</h4>
-                    <div className="bg-secondary rounded-lg p-6 text-center">
-                      <div className="text-muted-foreground mb-2">
-                        <Eye className="h-8 w-8 mx-auto mb-2" />
-                        Grad-CAM Heatmap
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        TODO: Display Grad-CAM overlay
-                      </p>
-                      {/* TODO: Replace with actual Grad-CAM image */}
-                      {/* <img src={predictionResult.gradcam_url} alt="Grad-CAM visualization" className="w-full rounded-lg" /> */}
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-foreground">Visual Explanation</h4>
+                      {!predictionResult.gradcam && (
+                        <Button 
+                          size="sm" 
+                          onClick={handleGenerateGradcam}
+                          disabled={isGeneratingGradcam}
+                        >
+                          {isGeneratingGradcam ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Generate Grad-CAM
+                            </>
+                          )}
+                        </Button>
+                      )}
                     </div>
+                    
+                    {!predictionResult.gradcam ? (
+                      <div className="bg-secondary rounded-lg p-6 text-center">
+                        <div className="text-muted-foreground mb-2">
+                          <Eye className="h-8 w-8 mx-auto mb-2" />
+                          Grad-CAM Heatmap
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Click "Generate Grad-CAM" to visualize affected areas
+                        </p>
+                      </div>
+                    ) : predictionResult.gradcam === 'normal' ? (
+                      <div className="bg-green-50 rounded-lg p-6 text-center border border-green-200">
+                        <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                        <p className="text-sm text-green-800">
+                          Normal X-Ray - No highlighting needed
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-2">Original X-Ray</p>
+                            <img 
+                              src={uploadedImageUrl} 
+                              alt="Original X-Ray" 
+                              className="w-full rounded-lg border"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-2">Grad-CAM Heatmap</p>
+                            <img 
+                              src={predictionResult.gradcam} 
+                              alt="Grad-CAM visualization" 
+                              className="w-full rounded-lg border"
+                            />
+                          </div>
+                        </div>
+                        <div className="bg-orange-50 rounded-lg p-3 border border-orange-200">
+                          <p className="text-xs text-orange-800">
+                            🔍 Red/yellow areas indicate regions the AI focused on for pneumonia detection
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

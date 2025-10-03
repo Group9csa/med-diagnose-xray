@@ -30,18 +30,42 @@ MODEL_PATHS = {
     'densenet121': '../models/densenet121_model.h5',
 }
 
-# Load models (uncomment when models are available)
+# Load models with compatibility fixes for TensorFlow 2.x
 MODELS = {}
-# try:
-#     from tensorflow import keras
-#     for name, path in MODEL_PATHS.items():
-#         if os.path.exists(path):
-#             MODELS[name] = keras.models.load_model(path)
-#             print(f"✓ Loaded {name} model")
-#         else:
-#             print(f"✗ Model not found: {path}")
-# except Exception as e:
-#     print(f"Error loading models: {e}")
+try:
+    import tensorflow as tf
+    from tensorflow import keras
+    
+    # Custom objects for backward compatibility
+    custom_objects = {
+        'GlorotUniform': tf.keras.initializers.GlorotUniform,
+        'Orthogonal': tf.keras.initializers.Orthogonal,
+        'VarianceScaling': tf.keras.initializers.VarianceScaling,
+    }
+    
+    for name, path in MODEL_PATHS.items():
+        if os.path.exists(path):
+            try:
+                # Load with compile=False to avoid optimizer issues
+                MODELS[name] = keras.models.load_model(
+                    path, 
+                    compile=False,
+                    custom_objects=custom_objects
+                )
+                # Recompile with current TensorFlow version
+                MODELS[name].compile(
+                    optimizer='adam',
+                    loss='categorical_crossentropy',
+                    metrics=['accuracy']
+                )
+                print(f"✓ Loaded {name} model")
+            except Exception as e:
+                print(f"✗ Error loading {name} model: {e}")
+        else:
+            print(f"✗ Model not found: {path}")
+except Exception as e:
+    print(f"Error initializing model loading: {e}")
+    print("Server will run with mock predictions")
 
 # Model performance metrics
 MODEL_PERFORMANCE = {
@@ -162,6 +186,7 @@ def predict():
         
         image_file = request.files['image']
         model_name = request.form.get('model', 'cnn')
+        generate_gradcam_flag = request.form.get('generate_gradcam', 'false').lower() == 'true'
         
         if model_name not in MODEL_PATHS:
             return jsonify({'error': 'Invalid model name'}), 400
@@ -173,7 +198,7 @@ def predict():
         
         # Make prediction
         if model_name in MODELS:
-            predictions = MODELS[model_name].predict(image_array)
+            predictions = MODELS[model_name].predict(image_array, verbose=0)
             prediction_class = np.argmax(predictions[0])
             confidence = float(predictions[0][prediction_class])
         else:
@@ -187,14 +212,18 @@ def predict():
         class_names = ['NORMAL', 'BACTERIAL PNEUMONIA', 'VIRAL PNEUMONIA']
         predicted_class = class_names[prediction_class]
         
-        # Generate Grad-CAM
+        # Generate Grad-CAM only if requested and not Normal
         gradcam_image = None
-        if model_name in MODELS:
-            gradcam_image = generate_gradcam(
-                MODELS[model_name], 
-                image_array, 
-                prediction_class
-            )
+        if generate_gradcam_flag:
+            # Only generate Grad-CAM for pneumonia cases (not Normal)
+            if prediction_class != 0 and model_name in MODELS:
+                gradcam_image = generate_gradcam(
+                    MODELS[model_name], 
+                    image_array, 
+                    prediction_class
+                )
+            elif prediction_class == 0:
+                gradcam_image = 'normal'  # Signal that it's a normal case
         
         processing_time = time.time() - start_time
         
@@ -213,6 +242,8 @@ def predict():
     
     except Exception as e:
         print(f"Prediction error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
